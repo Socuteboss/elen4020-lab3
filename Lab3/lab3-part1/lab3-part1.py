@@ -1,23 +1,33 @@
-import mrs
-import string
 
-class WordCount(mrs.MapReduce):
-    """Determines the number of times a word occurs in a text
+from mrjob.job import MRJob
+from mrjob.step import MRStep
+import re
 
-    Ignores stop words and is not case sensitive
+WORD_RE = re.compile(r"[\w']+")
 
-    To run use: python3 lab3-part1.py "very_large.txt" out
-    you will find your output in the output directory out
-    """
-    def map(self, key, value):
-        for word in value.split():
-            word = word.strip(string.punctuation)
-            if word not in ['for', 'as', 'the', 'is', 'at', 'which', 'on']:
-                yield (word, 1)
 
-    def reduce(self, key, values):
-        yield sum(values)
+class WordCount(MRJob):
+
+    """Determines the number of times a word occurs in a text, 
+    Ignores stop words. It is case sensitive"""
+
+    def mapper(self, _, line):
+        stop_words_file = '/Users/reegz/Documents/ELEC ENG 2020/BigData/Labs/Lab3/code/elen4020-lab3/Lab3/lab3-part1/stopwords.txt'
+
+        # Obtain stop words
+        with open(stop_words_file) as f:
+            self.stop_words = set(line.strip() for line in f)
+            for word in WORD_RE.findall(line):
+                if word not in self.stop_words:
+                   yield (word, 1)
+   
+
+    def combiner(self, word, counts):
+        yield (word, sum(counts))
+
+    def reducer(self, word, counts):
+        yield (word, sum(counts))
 
 if __name__ == '__main__':
-    mrs.main(WordCount)
+    WordCount.run()
 
