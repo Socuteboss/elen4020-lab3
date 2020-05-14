@@ -30,11 +30,11 @@ class TopKQuery(MRJob):
                 yield (word, 1)
 
     def combiner(self, word, counts):
-        # combine word counts by summing values for a particular word 
+        # combine words sum count into a tuple
         yield (word, sum(counts))
 
     def reducer(self, word, counts):
-        # returns a tuple to be sorted
+        # reduce map and sums results
         yield None, (sum(counts), word)
 
     def reducer_K_words(self, _, word_count_pairs):
